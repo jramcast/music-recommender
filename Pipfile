@@ -11,6 +11,9 @@ pytest = "*"
 
 [packages]
 pylast = "*"
+keras = "*"
+tensorflow = "*"
+recmetrics = "*"
 
 [requires]
 python_version = "3.7"
