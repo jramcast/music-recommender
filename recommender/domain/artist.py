@@ -1,8 +1,9 @@
+from typing import Optional
 from dataclasses import dataclass
 
 
 @dataclass
 class Artist:
     # MusicBrainz ID
-    mbid: str
     name: str
+    mbid: Optional[str]

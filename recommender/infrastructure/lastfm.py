@@ -21,9 +21,12 @@ class LastFMListeningRepository:
 
     def as_track(self, raw: pylast.PlayedTrack) -> Track:
 
+        raw_artist: pylast.Artist = raw.track.artist
+
+        print(raw.track.artist)
         artist = Artist(
-            raw.track.artist.mbid,
-            raw.track.artist.name
+            raw.track.artist.name,
+            raw_artist.get_mbid(),
         )
         return Track(
             artist,

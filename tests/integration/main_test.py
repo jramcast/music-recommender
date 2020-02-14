@@ -11,4 +11,4 @@ def assert_valid_track(t: Track):
     assert isinstance(t, Track)
     assert len(t.name) > 0
     assert len(t.artist.name) > 0
-    assert len(t.artist.mbid) > 0
+    assert t.artist.mbid is None or len(t.artist.mbid) > 0

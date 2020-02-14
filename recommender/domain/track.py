@@ -1,7 +1,8 @@
 from dataclasses import dataclass
+from .artist import Artist
 
 
 @dataclass
 class Track:
-    artist: str
+    artist: Artist
     name: str
