@@ -14,10 +14,11 @@ pylast = "*"
 keras = "*"
 tensorflow = "*"
 recmetrics = "*"
+flask = "*"
 
 [requires]
 python_version = "3.7"
 
 [scripts]
-start = "python main.py"
+start = "flask run"
 test = "watch --color python -m pytest tests --color=yes"

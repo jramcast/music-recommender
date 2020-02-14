@@ -16,14 +16,14 @@ class LastFMListeningRepository:
 
     def get_tracks(self) -> Iterable[Track]:
         user = self.lastfm.get_user(self.username)
-        rawtracks: List[pylast.PlayedTrack] = user.get_recent_tracks()
-        return [self.as_track(t) for t in rawtracks]
+        rawtracks: List[pylast.PlayedTrack] = user.get_recent_tracks(limit=5)
+        for t in rawtracks:
+            yield self.as_track(t)
 
     def as_track(self, raw: pylast.PlayedTrack) -> Track:
 
         raw_artist: pylast.Artist = raw.track.artist
 
-        print(raw.track.artist)
         artist = Artist(
             raw.track.artist.name,
             raw_artist.get_mbid(),
