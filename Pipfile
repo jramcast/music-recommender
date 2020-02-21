@@ -21,4 +21,4 @@ python_version = "3.7"
 
 [scripts]
 start = "flask run"
-test = "watch --color python -m pytest tests --color=yes"
+test = "watch --color python -m pytest tests/unit --color=yes"

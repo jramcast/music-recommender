@@ -1,3 +1,4 @@
+from typing import Optional
 from dataclasses import dataclass
 from .artist import Artist
 
@@ -6,3 +7,4 @@ from .artist import Artist
 class Track:
     artist: Artist
     name: str
+    mbid: Optional[str] = None

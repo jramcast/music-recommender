@@ -4,6 +4,7 @@ import os
 import logging
 import pickle
 from recommender.infrastructure.lastfm import LastFMListeningRepository
+from recommender.infrastructure.repository.csv import CSVTracksRepository
 
 logging.basicConfig(
     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -11,18 +12,17 @@ logging.basicConfig(
 )
 
 
-repository = LastFMListeningRepository(
+lastfm = LastFMListeningRepository(
     os.environ["LASTFM_API_KEY"],
     os.environ["LASTFM_API_SECRET"],
     os.environ["LASTFM_USERNAME"]
 )
 
-with open('data/tracks.csv', 'a') as datafile:
-    tracks = repository.get_tracks()
+tracks_repository = CSVTracksRepository("data/tracks.csv")
 
-    for t in tracks:
-        print("track", t)
-        datafile.write(str(pickle.dumps(t)) + "\n")
 
 if __name__ == "__main__":
-    print(tracks)
+    tracks = lastfm.get_tracks()
+    for t in tracks:
+        print("track", t)
+        tracks_repository.save(t)

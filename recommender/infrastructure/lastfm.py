@@ -21,16 +21,22 @@ class LastFMListeningRepository:
             yield self.as_track(t)
 
     def as_track(self, raw: pylast.PlayedTrack) -> Track:
-
         raw_artist: pylast.Artist = raw.track.artist
+        raw_track: pylast.Track = raw.track
 
         artist = Artist(
-            raw.track.artist.name,
+            raw_artist.get_correction() or "",
             raw_artist.get_mbid(),
         )
         return Track(
             artist,
-            raw.track.title
+            raw_track.get_correction() or "",
+            raw_track.get_mbid(),
+            # raw_track.get_playcount(),
+            # raw_track.get_tags(),
+            # raw_track.get_userplaycount(),
+            # raw_track.get_userplaycount(),
+
         )
 
 
