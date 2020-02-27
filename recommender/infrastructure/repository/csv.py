@@ -5,7 +5,12 @@ from recommender.domain.track import Track
 class CSVTracksRepository:
 
     csvwriter: csv.DictWriter
-    fieldnames = ["track_mbid", "track_name", "artist_mbid", "artist_name"]
+    fieldnames = [
+        "track_mbid", "track_name",
+        "artist_mbid", "artist_name",
+        "user_playcount", "total_playcount",
+        "tags"
+    ]
 
     def __init__(self, filepath: str) -> None:
         csvfile = open(filepath, "w")
@@ -17,5 +22,8 @@ class CSVTracksRepository:
             "track_mbid": track.mbid,
             "track_name": track.name,
             "artist_mbid": track.artist.mbid,
-            "artist_name": track.artist.name
+            "artist_name": track.artist.name,
+            "user_playcount": track.user_playcount,
+            "total_playcount": track.total_playcount,
+            "tags": track.tags
         })

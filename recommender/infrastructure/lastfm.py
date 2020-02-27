@@ -10,7 +10,7 @@ class LastFMListeningRepository:
 
         self.lastfm = pylast.LastFMNetwork(
             apikey,
-            apisecret,
+            apisecret
         )
         self.username = username
 
@@ -23,20 +23,23 @@ class LastFMListeningRepository:
     def as_track(self, raw: pylast.PlayedTrack) -> Track:
         raw_artist: pylast.Artist = raw.track.artist
         raw_track: pylast.Track = raw.track
+        raw_tags: List[pylast.TopItem] = raw_track.get_top_tags()
+
+
+        raw_track.username = self.username
 
         artist = Artist(
             raw_artist.get_correction() or "",
             raw_artist.get_mbid(),
         )
+
         return Track(
             artist,
             raw_track.get_correction() or "",
-            raw_track.get_mbid(),
-            # raw_track.get_playcount(),
-            # raw_track.get_tags(),
-            # raw_track.get_userplaycount(),
-            # raw_track.get_userplaycount(),
-
+            int(raw_track.get_userplaycount() or 0),
+            int(raw_track.get_playcount()),
+            [t.item.get_name() for t in raw_tags],
+            raw_track.get_mbid()
         )
 
 

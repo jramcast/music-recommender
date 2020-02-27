@@ -1,6 +1,1 @@
-track_mbid,track_name,artist_mbid,artist_name
-8480f095-a6e3-4c9e-a142-585c9ca1a368,Rotation,fe451fc6-d58c-49e4-b8e4-6a1b11b998fb,Clan Greco
-,It's A Fine Day - Atb Radio Mix,c5fc93e8-b32f-48af-a744-363476dc9096,Miss Jane
-6c889391-5fe1-4f35-850f-dd3ebfa548c2,Cut Dick,a4a3048f-3968-4848-9f53-94e3d4f88b53,Mr. Oizo
-ae5a8a61-0674-4440-beec-a8393b7170d2,Check The Meaning,2d1d8985-47bc-4244-8cc3-577584e411f6,Richard Ashcroft
-,8:07,8179e236-86df-459f-bd51-0107138d0a6a,Global Communication
+track_mbid,track_name,artist_mbid,artist_name,user_playcount,total_playcount,tags

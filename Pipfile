@@ -15,6 +15,7 @@ keras = "*"
 tensorflow = "*"
 recmetrics = "*"
 flask = "*"
+spotipy = "*"
 
 [requires]
 python_version = "3.7"
