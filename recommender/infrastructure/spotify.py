@@ -1,28 +1,43 @@
-from recommender.domain.artist import Artist
+import logging
 import spotipy
-import spotipy.oauth2 as oauth2
-from spotipy.oauth2 import SpotifyClientCredentials
+
 from spotipy import util
-from typing import Iterable, List
 from ..domain.track import Track
+import json
 
 
-class SpotifyListeningRepository:
+class SpotifyService:
 
     spotify: spotipy.Spotify
 
-    def __init__(self, apikey, apisecret) -> None:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        username: str,
+        apikey: str,
+        apisecret: str,
+        redirect_uri: str
+    ) -> None:
         token = util.prompt_for_user_token(
-                "jimmydj2000",
+                username,
                 scope="user-library-read",
                 client_id=apikey,
                 client_secret=apisecret,
-                redirect_uri='http://localhost/callback'
+                redirect_uri=redirect_uri
         )
         # token = credentials.get_access_token()
         self.spotify = spotipy.Spotify(auth=token)
 
-    def get_tracks(self) -> Iterable[Track]:
-        print(self.spotify.current_user_saved_tracks())
-        return []
+    def get_audio_features(self, track: Track):
+        print(track)
+        search_results = self.spotify.search(
+            f"artist:{track.artist.name} track:{track.name}", limit=1
+        )
+        search_items = search_results["tracks"]["items"]
+        if len(search_items) > 0:
+            spotify_track = search_items[0]
+            audio_features = self.spotify.audio_features(spotify_track["id"])
+            print(json.dumps(audio_features))
+            audio_analysis = self.spotify.audio_analysis(spotify_track["id"])
+            print(json.dumps(audio_analysis))
 
