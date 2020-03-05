@@ -3,9 +3,10 @@
 import os
 import logging
 from os import environ
+from time import sleep
 from pymongo import MongoClient
 from recommender.infrastructure.spotify import SpotifyService
-from recommender.infrastructure.repository.mongodb import MongoDBTracksRepository
+from recommender.infrastructure.repository.mongodb import MongoDBSpotifyAudioFeaturesRepository, MongoDBTracksRepository
 
 
 logging.basicConfig(
@@ -25,10 +26,22 @@ spotify = SpotifyService(
 client = MongoClient()
 db = client.mgr
 tracks_repository = MongoDBTracksRepository(db.playedtracks)
+audio_features_repository = MongoDBSpotifyAudioFeaturesRepository(
+    db.spotify_audiofeatures
+)
 
 
 if __name__ == "__main__":
 
-    for playedtrack in tracks_repository.all():
-        spotify.get_audio_features(playedtrack)
-        break
+    for track in tracks_repository.all():
+
+        if audio_features_repository.load(track):
+            logging.info(f"Skipping {track} features already in DB.")
+            continue
+
+        features = spotify.get_audio_features(track)
+        if features:
+            audio_features_repository.save(features)
+            logging.info(f"Got audio features for {track}")
+
+        sleep(1)
