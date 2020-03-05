@@ -17,9 +17,7 @@ class LastFMListeningRepository:
         self.logger = logger
         self.lastfm = pylast.LastFMNetwork(
             api_key=apikey,
-            api_secret=apisecret,
-            username=username,
-            password_hash=pylast.md5(password)
+            api_secret=apisecret
         )
         self.username = username
 
@@ -52,6 +50,9 @@ class LastFMListeningRepository:
         raw_track: pylast.Track = raw.track
         raw_tags: List[pylast.TopItem] = raw_track.get_top_tags(limit=10)
 
+        # to be able to retrieve user counts
+        raw_track.username = self.username
+
         artist = Artist(
             raw_artist.get_correction() or "",
             raw_artist.get_mbid(),
@@ -72,28 +73,3 @@ class LastFMListeningRepository:
             played_at,
             raw_track.get_mbid()
         )
-
-
-
-# # Now you can use that object everywhere
-# user = lastfm.get_user("jimmydj2000")
-# print(user)
-
-# print("TRack")
-# track = lastfm.get_track("Vangelis", "Tears in the rain")
-
-# print(track)
-# print(track.get_wiki_summary())
-
-
-# loved_tracks = user.get_loved_tracks(limit=5)
-# print("loved tracks count", len(loved_tracks))
-
-# print("LOVED TRACKS")
-# for loved in loved_tracks:
-#     pprint(loved.track.get_mbid())
-#     print(loved.track.artist, loved.track.title)
-#     print('************************')
-
-# print("TOP TAGS")
-# print([(each.item.name, each.weight) for each in user.get_top_tags()])
