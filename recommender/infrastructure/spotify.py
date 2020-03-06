@@ -11,6 +11,10 @@ class SpotifyService:
 
     spotify: spotipy.Spotify
     logger: logging.Logger
+    username: str
+    apikey: str
+    apisecret: str
+    redirect_uri: str
 
     def __init__(
         self,
@@ -21,15 +25,11 @@ class SpotifyService:
         redirect_uri: str
     ) -> None:
         self.logger = logger
-        token = util.prompt_for_user_token(
-            username,
-            scope="user-library-read",
-            client_id=apikey,
-            client_secret=apisecret,
-            redirect_uri=redirect_uri
-        )
-        # token = credentials.get_access_token()
-        self.spotify = spotipy.Spotify(auth=token)
+        self.username = username
+        self.apikey = apikey
+        self.apisecret = apisecret
+        self.redirect_uri = redirect_uri
+        self._login()
 
     def get_audio_features(
         self, track: Track
@@ -60,6 +60,13 @@ class SpotifyService:
                     audio_features,
                     audio_analysis
                 )
+            except spotipy.client.SpotifyException as e:
+                if "expired" in e.msg:
+                    self._login()
+                    return self.get_audio_features(track)
+                else:
+                    raise e
+
             except Exception as e:
                 self.logger.warn(
                     f"Error while getting audio features for " +
@@ -71,3 +78,14 @@ class SpotifyService:
                 f"{track_artist} - {track_name}"
             )
             return None
+
+    def _login(self):
+        token = util.prompt_for_user_token(
+            self.username,
+            scope="user-library-read",
+            client_id=self.apikey,
+            client_secret=self.apisecret,
+            redirect_uri=self.redirect_uri
+        )
+        # token = credentials.get_access_token()
+        self.spotify = spotipy.Spotify(auth=token)
