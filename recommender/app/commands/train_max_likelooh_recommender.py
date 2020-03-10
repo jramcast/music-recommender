@@ -3,8 +3,7 @@
 
 """
 Recommender basic test
-based on
-https://www.mendeley.com/viewer/?fileId=20d7cbe3-573e-fc75-63c3-8e1f174869a8&documentId=28288f63-525b-3f5d-a309-a7d1b9281c25
+based on cosine similarity between vectors of "preferences" and recommended songs
 """
 
 import os
@@ -57,7 +56,11 @@ def calculate_max_similarity(track: Track, preferences: List[List[str]]):
         else:
             track_features.append(0)
 
-    return cosine_similarity([track_features], preferences)
+    a = np.array(track_features).reshape(1, len(LABELS))
+    b = np.array(preferences)
+
+    similarity_to_prefence_vectors = cosine_similarity(a, b)
+    return np.max(similarity_to_prefence_vectors)
 
 
 def str_to_bytes(x):
@@ -73,8 +76,8 @@ def preprocess_preferences(preferences):
     preprocessed_preferences = []
     for row in preferences:
         preprocessed_row = []
-        for i, label in enumerate(LABELS):
-            if label in track.tags:
+        for label in LABELS:
+            if label in row:
                 preprocessed_row.append(1)
             else:
                 preprocessed_row.append(0)
@@ -84,15 +87,27 @@ def preprocess_preferences(preferences):
     return preprocessed_preferences
 
 
+def sort_rank_fn(each):
+    return -each[1]
+
+
 if __name__ == "__main__":
 
     preferences = []
 
-    for track in tracks_repository.all():
+    train_songs = tracks_repository.all()
+
+    for track in train_songs:
         if is_track_relevant(track):
             preferences.append(extract_track_features(track))
 
-    print(calculate_max_similarity(
-        list(tracks_repository.all())[35],
-        preprocess_preferences(preferences)
-    ))
+    preprocessed_preferences = preprocess_preferences(preferences)
+
+    rank = []
+    # Todo: get a test set
+    test_songs = list(tracks_repository.all())[:-10]
+    for t in test_songs:
+        similarity = calculate_max_similarity(t, preprocessed_preferences)
+        rank.append((t, similarity))
+
+    print(sorted(rank, key=sort_rank_fn))
