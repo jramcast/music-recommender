@@ -38,10 +38,21 @@ class SpotifyService:
         track_name = track.name
         track_artist = track.artist.name
 
-        search_results = self.spotify.search(
-            f"artist:{track_artist} track:{track_name}",
-            limit=1
-        )
+        try:
+            search_results = self.spotify.search(
+                f"artist:{track_artist} track:{track_name}",
+                limit=1
+            )
+        except spotipy.client.SpotifyException as e:
+            if e.http_status == 401:
+                self._login()
+                search_results = self.spotify.search(
+                    f"artist:{track_artist} track:{track_name}",
+                    limit=1
+                )
+            else:
+                raise e
+
         search_items = search_results["tracks"]["items"]
 
         if len(search_items) > 0:
@@ -61,9 +72,14 @@ class SpotifyService:
                     audio_analysis
                 )
             except spotipy.client.SpotifyException as e:
-                if "expired" in e.msg:
+                if e.http_status == 401:
                     self._login()
                     return self.get_audio_features(track)
+                elif e.http_status == 404:
+                    self.logger.warn(
+                        f"Audio features not found for " +
+                        f"{track_artist} - {track_name}"
+                    )
                 else:
                     raise e
 
