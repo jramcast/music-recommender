@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     preferences = []
 
-    train_songs = tracks_repository.all()
+    train_songs = list(tracks_repository.all())[-2000:-100]
 
     for track in train_songs:
         if is_track_relevant(track):
@@ -105,9 +105,12 @@ if __name__ == "__main__":
 
     rank = []
     # Todo: get a test set
-    test_songs = list(tracks_repository.all())[:-10]
+    test_songs = list(tracks_repository.all())[-100:]
     for t in test_songs:
         similarity = calculate_max_similarity(t, preprocessed_preferences)
         rank.append((t, similarity))
 
-    print(sorted(rank, key=sort_rank_fn))
+    print("RESULTS")
+
+    for each in sorted(rank, key=sort_rank_fn)[:50]:
+        print(each)
