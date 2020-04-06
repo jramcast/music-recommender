@@ -29,7 +29,6 @@ tf = TfidfVectorizer(
     stop_words='english'
 )
 tfidf_matrix = tf.fit_transform(dataset['description'])
-
 print("========= TDIF matrix =========")
 tfidf_matrix_arr = tfidf_matrix.toarray()
 print(tfidf_matrix_arr, end="\n\n")
@@ -44,10 +43,10 @@ print("TDIF SHAPE", tfidf_matrix_arr.shape, end="\n\n")
 # in cases where td-idf produces normalized vectors
 # https://scikit-learn.org/stable/modules/metrics.html#cosine-similarity
 similarities = linear_kernel(tfidf_matrix, tfidf_matrix)
-
 print("======= SIMILARITIES matrix ===========")
 print(similarities, end="\n\n")
 print("SIMILARITIES shape", similarities.shape, end="\n\n")
+
 
 results = {}
 for idx, row in dataset.iterrows():
