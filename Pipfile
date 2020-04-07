@@ -19,6 +19,7 @@ spotipy = "*"
 pylast = {git = "https://github.com/LeonelF/pylast.git"}
 pymongo = "*"
 sklearn = "*"
+fuzzywuzzy = "*"
 
 [requires]
 python_version = "3.7"
