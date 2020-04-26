@@ -1,0 +1,1 @@
+https://www.kaggle.com/c/msdchallenge/discussion/2413

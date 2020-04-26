@@ -16,7 +16,7 @@ import pathlib
 
 data_path = os.path.join(
     pathlib.Path(__file__).parent.absolute(),
-    "../../../../data/msdchallenge"
+    "../../../../data/msdchallenge/kaggle_challenge_files"
 )
 
 eval_triplets_filepath = os.path.join(
