@@ -12,7 +12,17 @@ It is a baseline implementation based on song popularity.
 """
 
 import os
+import sys
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../../../.."
+    )
+)
+
 import pathlib
+from recommender.domain.scoring import msd_average_precision, msd_mAP
 
 data_path = os.path.join(
     pathlib.Path(__file__).parent.absolute(),
@@ -73,14 +83,18 @@ with open(songs_filepath, "r") as f:
 
 # Load songs each user's listening history
 user_to_songs = {}
+user_to_song_ids = {}
 with open(eval_triplets_filepath, "r") as f:
     line = f.readline()
     while line:
         user, song, _ = line.strip().split("\t")
+        song_id = song_to_index[song]
         if user in user_to_songs:
             user_to_songs[user].add(song)
+            user_to_song_ids[user].add(song_id)
         else:
             user_to_songs[user] = set([song])
+            user_to_song_ids[user] = set([song_id])
 
         line = f.readline()
 
@@ -98,21 +112,31 @@ recommendations = {}
 for user in canonical_users:
     songs_to_recommend = []
     for song in songs_ordered:
-        if len(songs_to_recommend) >= 100:
+        if len(songs_to_recommend) >= 500:
             break
         if song not in user_to_songs[user]:
             songs_to_recommend.append(song)
 
     song_indices = [song_to_index[song] for song in songs_to_recommend]
-
     recommendations[user] = song_indices
-    print(".", end='')
 
 
-example = recommendations['b584c8326c8f79052d8d2adae67afb9da248b3df']
-print("\n\nUser: b584c8326c8f79052d8d2adae67afb9da248b3df. "
-      + f"Recommended songs: {example}")
+
+print("\n\n====== EVALUATION ==========")
 
 
-# Todo, include evaluation & test
-# https://www.kaggle.com/c/msdchallenge/overview/evaluation
+score = msd_mAP(
+    canonical_users,
+    recommendations,
+    user_to_song_ids
+)
+
+print("mAP", score)
+
+
+print("\n\n==== RECOMMENDATION EXAMPLE ==========")
+
+test_user = "b584c8326c8f79052d8d2adae67afb9da248b3df"
+recommended_for_user = recommendations[test_user]
+print(f"\nUser: {test_user}. "
+      + f"Recommended songs: {recommended_for_user}")
