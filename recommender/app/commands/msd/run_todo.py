@@ -10,19 +10,8 @@ Recommender system for Million Song dataset (MSD),
 - Get the dataset from: http://millionsongdataset.com/challenge/#data1
 
 In particular, this experiment ....
-"""
-
-import numpy as np
-from sklearn.metrics import average_precision_score
-
-# TODO: download MSD: http://millionsongdataset.com/pages/getting-dataset/
 
 
-# TODO: check song to track mapping with "taste_profile_song_to_tracks.txt"
-# It seems songs are not the same as tracks
-# More info here: https://www.kaggle.com/c/msdchallenge/data
-
-"""
 DATA Review:
 
 The concatenation of EvalDataYear1MSDWebsite/*_visible seems to be 
@@ -47,75 +36,66 @@ The Million Song Dataset Challenge, McFee, B., Bertin-Mahieux. T., Ellis, D.P.W.
 4th International Workshop on Advances in Music Information Research (AdMIRe)
 https://bmcfee.github.io/papers/msdchallenge.pdf
 """
+import os
+import pathlib
+
+import sys
+sys.path.insert(
+    0,
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "../../../.."
+    )
+)
+from recommender.infrastructure.msd import loaders # noqa
+from recommender.domain.recommend.regression import RegressionRecommender  # noqa
 
 
-y_true = np.array([1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0])
-y_scores = np.array([0, 0.95, 0.1, 0.4, 0.4, 0.6, 0.8, 0.32, 0.33, 0.34, 0.35])
-ap = average_precision_score(y_true, y_scores)
-print(ap)
+MSD_DATA_DIR = os.getenv("DATA_DIR") or os.path.join(
+    pathlib.Path(__file__).parent.absolute(),
+    "../../../../data/msdchallenge/MillionSongSubset/data"
+)
+
+MSD_CSV_FILEPATH = "data/msdchallenge/msd.csv"
+
+KAGGLE_DATA_DIR = os.path.join(
+    pathlib.Path(__file__).parent.absolute(),
+    "../../../../data/msdchallenge/kaggle_challenge_files"
+)
+
+TASTE_PROFILE_DATA_DIR = os.path.join(
+    pathlib.Path(__file__).parent.absolute(),
+    "../../../../data/msdchallenge/TasteProfileDataset"
+)
+
+songs_filepath = os.path.join(
+    KAGGLE_DATA_DIR, "kaggle_songs.txt"
+)
+
+print("Loading kaggle song indexes")
+song_kaggle_indexes = loaders.kagglesongs.load(KAGGLE_DATA_DIR)
+
+print("Loading songs")
+songs = {}
+for songid, song_kaggleidx in enumerate(song_kaggle_indexes):
+    songs[songid] = loaders.songs.find(songid, MSD_DATA_DIR)
+
+# songs = loaders.songs.load(MSD_CSV_FILEPATH)
+
+print("Loading users")
+users = loaders.users.load(KAGGLE_DATA_DIR)
+
+print("Loading users to songs training set")
+user_to_songs_train = loaders.taste.load_training_set(TASTE_PROFILE_DATA_DIR)
+
+print("Loading users to songs evaluation set")
+user_to_songs_eval = loaders.taste.load_evaluation_set(KAGGLE_DATA_DIR)
 
 
-from sklearn.metrics import precision_recall_curve
-import matplotlib.pyplot as plt
+recommender = RegressionRecommender(
+    user_to_songs_train,
+    user_to_songs_eval,
+    songs
+)
 
-
-n_classes = 2
-precision = {}
-recall = {}
-average_precision = {}
-
-
-precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
-average_precision = average_precision_score(y_true, y_scores)
-
-print("R", recall)
-print("P", precision)
-print("T", thresholds)
-print("AP", average_precision)
-
-plt.figure()
-plt.step(recall, precision, where='post')
-
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.ylim([0.0, 1.05])
-plt.xlim([0.0, 1.0])
-plt.title('Average precision score={0:0.2f}'.format(average_precision))
-plt.savefig("ap.png")
-
-
-# Manual implementation: https://bmcfee.github.io/papers/msdchallenge.pdf equation 2
-
-from sklearn.metrics import confusion_matrix
-
-print("========== MANUAL ===============")
-
-def precision_at_k(y_true, y_pred, k):
-    tn, fp, fn, tp = confusion_matrix(y_true[:k], y_pred[:k]).ravel()
-    return tp / k
-
-
-predicted = np.array([1, 0, 1, 0, 1, 1, 0, 1, 0, 1])
-real = np.array([0, 0, 1, 0, 1, 1, 0, 1, 0, 1])
-K = 6
-
-
-print(f"precision at {K}:", precision_at_k(real, predicted, K))
-
-
-def ap(real, predicted, k):
-    tn, fp, fn, tp = confusion_matrix(real, predicted).ravel()
-    positives = tp + fp
-    nu = min(k, positives)
-
-    real_list = real.tolist()
-    total = 0
-    for i in range(k):
-        if real_list[i] == 1:
-            total += precision_at_k(real, predicted, i + 1)
-
-    return total / nu
-
-
-print("AP manual:", ap(real, predicted, K))
-print("AP sklearn:", average_precision_score(real[:K], predicted[:K]))
+recommender.train()
