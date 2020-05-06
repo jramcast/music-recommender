@@ -5,16 +5,33 @@ Modifies code in https://github.com/AumitLeon/million-songs/blob/master/get_data
 import os
 import csv
 import pandas as pd
+import json
 from . import hdf5_getters
 
-song_to_file = {}
+track_to_file = {}
+
+songid_to_trackid = {}
 
 
 def find(songid, data_dir):
-    if not song_to_file:
-        _load_song_files(data_dir)
+    global track_to_file
+    global songid_to_trackid
 
-    return None # TODO
+    if not songid_to_trackid:
+        songid_to_trackid = _load_song_to_track_map()
+
+    if not track_to_file:
+        track_to_file = _load_song_files(data_dir)
+
+    try:
+        trackid = songid_to_trackid[songid]
+        return track_to_file[trackid]
+    except KeyError:
+        raise SongNotFound
+
+
+class SongNotFound(Exception):
+    pass
 
 
 def load(csv_filepath):
@@ -142,15 +159,44 @@ def to_csv(data_dir, out_filepath):
 
 
 def _load_song_files(data_dir):
+    index_filepath = "./data/song-file-map.json"
+    files_by_trackid = {}
 
-    for root, dirs, filenames in os.walk(data_dir):
-        for f in filenames:
-            # TODO Review taste_profile_song_to_tracks
-            h5 = hdf5_getters.open_h5_file_read(os.path.join(root, f))
-            num_songs = hdf5_getters.get_num_songs(h5)
+    try:
+        with open(index_filepath) as f:
+            return json.load(f)
+    except FileNotFoundError:
+        print("Building tracks to files index file...")
+        for root, dirs, filenames in os.walk(data_dir):
+            for f in filenames:
+                # TODO Review taste_profile_song_to_tracks
+                filename = os.path.join(root, f)
+                h5 = hdf5_getters.open_h5_file_read(filename)
+                num_songs = hdf5_getters.get_num_songs(h5)
 
-            for i in range(num_songs):
-                song_id = hdf5_getters.get_song_id(
-                    h5, songidx=i).decode()
+                for i in range(num_songs):
+                    track_id = hdf5_getters.get_track_id(
+                        h5, songidx=i).decode()
 
-                song_to_file[song_id] = (f, i)
+                    files_by_trackid[track_id] = (filename, i)
+
+                h5.close()
+
+        with open("./data/song-file-map.json", "w") as f:
+            json.dump(files_by_trackid, f)
+
+        return files_by_trackid
+
+
+def _load_song_to_track_map():
+    filepath = "./data/msdchallenge/kaggle_challenge_files/taste_profile_song_to_tracks.txt"
+
+    with open(filepath, "r") as f:
+        data = {}
+        for row in f.readlines():
+            ids = row.strip().split("\t")[:2]
+            if len(ids) == 2:
+                songid, trackid = ids
+                data[songid] = trackid
+
+        return data

@@ -47,14 +47,16 @@ sys.path.insert(
         "../../../.."
     )
 )
+
+from recommender.infrastructure.msd.loaders.songs import SongNotFound
 from recommender.infrastructure.msd import loaders # noqa
 from recommender.domain.recommend.regression import RegressionRecommender  # noqa
 
 
-MSD_DATA_DIR = os.getenv("DATA_DIR") or os.path.join(
+MSD_DATA_DIR = os.path.normpath(os.getenv("DATA_DIR") or os.path.join(
     pathlib.Path(__file__).parent.absolute(),
     "../../../../data/msdchallenge/MillionSongSubset/data"
-)
+))
 
 MSD_CSV_FILEPATH = "data/msdchallenge/msd.csv"
 
@@ -74,28 +76,34 @@ songs_filepath = os.path.join(
 
 print("Loading kaggle song indexes")
 song_kaggle_indexes = loaders.kagglesongs.load(KAGGLE_DATA_DIR)
+print(f"{len(song_kaggle_indexes.keys())} songs in kaggle competition")
 
 print("Loading songs")
 songs = {}
-for songid, song_kaggleidx in enumerate(song_kaggle_indexes):
-    songs[songid] = loaders.songs.find(songid, MSD_DATA_DIR)
+for songid, song_kaggleidx in song_kaggle_indexes.items():
+    try:
+        songs[songid] = loaders.songs.find(songid, MSD_DATA_DIR)
+    except SongNotFound:
+        print(f"Track for song {songid} not found in dataset")
+
+print(f"Loaded {len(songs)}")
 
 # songs = loaders.songs.load(MSD_CSV_FILEPATH)
 
-print("Loading users")
-users = loaders.users.load(KAGGLE_DATA_DIR)
+# print("Loading users")
+# users = loaders.users.load(KAGGLE_DATA_DIR)
 
-print("Loading users to songs training set")
-user_to_songs_train = loaders.taste.load_training_set(TASTE_PROFILE_DATA_DIR)
+# print("Loading users to songs training set")
+# user_to_songs_train = loaders.taste.load_training_set(TASTE_PROFILE_DATA_DIR)
 
-print("Loading users to songs evaluation set")
-user_to_songs_eval = loaders.taste.load_evaluation_set(KAGGLE_DATA_DIR)
+# print("Loading users to songs evaluation set")
+# user_to_songs_eval = loaders.taste.load_evaluation_set(KAGGLE_DATA_DIR)
 
 
-recommender = RegressionRecommender(
-    user_to_songs_train,
-    user_to_songs_eval,
-    songs
-)
+# recommender = RegressionRecommender(
+#     user_to_songs_train,
+#     user_to_songs_eval,
+#     songs
+# )
 
-recommender.train()
+# recommender.train()
