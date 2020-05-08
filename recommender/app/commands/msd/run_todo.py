@@ -15,7 +15,7 @@ In particular, this experiment ....
 DATA Review:
 
 The concatenation of EvalDataYear1MSDWebsite/*_visible seems to be 
-the same as kaggle_challenge_files/kaggle_visible_evaluation_triplets.txt (check this)
+the same as kaggle_challenge_files/kaggle_visible_evaluation_tripletstrackid_to_filehis)
 Could this be our validation set?
 
 My guess:
@@ -48,6 +48,7 @@ sys.path.insert(
     )
 )
 
+import pandas as pd
 from recommender.infrastructure.msd.loaders.songs import SongNotFound
 from recommender.infrastructure.msd import loaders # noqa
 from recommender.domain.recommend.regression import RegressionRecommender  # noqa
@@ -78,15 +79,23 @@ print("Loading kaggle song indexes")
 song_kaggle_indexes = loaders.kagglesongs.load(KAGGLE_DATA_DIR)
 print(f"{len(song_kaggle_indexes.keys())} songs in kaggle competition")
 
-print("Loading songs")
+print("Loading songs...")
 songs = {}
+missing_songs_count = 0
 for songid, song_kaggleidx in song_kaggle_indexes.items():
     try:
         songs[songid] = loaders.songs.find(songid, MSD_DATA_DIR)
     except SongNotFound:
-        print(f"Track for song {songid} not found in dataset")
+        missing_songs_count += 1
 
-print(f"Loaded {len(songs)}")
+missing_songs_percent = len(songs) / len(song_kaggle_indexes.keys())
+
+print(f"Loaded {len(songs)} out of {len(song_kaggle_indexes.keys())}. "
+      f"({missing_songs_percent}% of missing songs)")
+
+songs_df = pd.DataFrame(songs).transpose()
+print(songs_df.head())
+songs_df.to_csv("./data/songs_with_features.csv", index=False)
 
 # songs = loaders.songs.load(MSD_CSV_FILEPATH)
 
