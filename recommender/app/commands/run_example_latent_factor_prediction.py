@@ -1,9 +1,16 @@
 import numpy as np
 import pandas as pd
 
+#  We use the the song latent factor matrix extracted from matrix factorization
+#  and then predict a classifier that, given a song features, predicts these latent factors.
+#  
 #  Inspired in:
 #  https://medium.com/logicai/non-negative-matrix-factorization-for-recommendation-systems-985ca8d5c16c
+#
+# Run with docker GPU: docker run --gpus all -v $(pwd):/app -it --rm tensorflow/tensorflow:latest-gpu bash
 
+
+# Create a example user-to-song rating matrix
 index = ["u1", "u2", "u3"]
 columns = [f"song{i}" for i in range(1, 6)]
 data = pd.DataFrame(
@@ -33,8 +40,7 @@ print("User latent factors matrix (Num factors * Num songs)")
 # print(S)
 
 
-print("Song low-level audio features")
-
+# Create an example matrix of song features
 songindex = ["s1", "s2", "s3", "s4", "s5"]
 featcolums = [f"feat{i}" for i in range(1, 6)]
 songs = pd.DataFrame(
@@ -49,9 +55,13 @@ songs = pd.DataFrame(
 )
 songs.index = songindex
 
+
+print("Song low-level audio features")
 print(songs)
 
 
+
+# Train a NN that predicts latent factors, given song features
 print("Train ")
 import tensorflow as tf
 mnist = tf.keras.datasets.mnist
@@ -90,7 +100,6 @@ model.fit(x_train, y_train, epochs=50)
 mse, mae, mse = model.evaluate(x_test, y_test, verbose=2)
 
 
-# Run with docker GPU: docker run --gpus all -v $(pwd):/app -it --rm tensorflow/tensorflow:latest-gpu bash
 
 print('\nTest mean absolute error:', mae)
 
