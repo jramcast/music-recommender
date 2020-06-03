@@ -65,6 +65,16 @@ user_ids = users_to_songs.keys()
 num_users = len(user_ids)
 num_songs = len(song_ids)
 
+
+# Use this approach: 
+# https://stackoverflow.com/questions/57370472/recommendation-system-with-matrix-factorization-for-huge-data-gives-memoryerror
+# Get i and j where to put each value
+
+user_indexes = [ i for i, _ in enumerate(user_ids)]
+movies_indexes = [ j for j, _ in enumerate(song_ids)]
+
+
+
 # for i, user in enumerate(user_ids):
 
 #     for j, song in enumerate(song_ids):
