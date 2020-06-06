@@ -13,88 +13,148 @@ sys.path.insert(
 )
 
 import pathlib
+import json
 import pandas as pd
 import numpy as np
+from scipy.sparse import csc_matrix, save_npz, load_npz
 from recommender.domain.scoring import msd_average_precision, msd_mAP
+from sklearn.decomposition import NMF, IncrementalPCA
+
 
 data_path = os.path.join(
     pathlib.Path(__file__).parent.absolute(),
-    "../../../../data/msdchallenge/kaggle_challenge_files"
+    "../../../../data/msdchallenge/"
 )
-
 user_song_plays_filepath = os.path.join(
-    data_path, "kaggle_visible_evaluation_triplets.txt"
+    data_path, "TasteProfileDataset/train_triplets.txt"
 )
-users_filepath = os.path.join(
-    data_path, "kaggle_users.txt"
+csc_filepath = os.path.join(
+    data_path, "csc_matrix.npz"
 )
-songs_filepath = os.path.join(
-    data_path, "kaggle_songs.txt"
+songs_to_index_filepath = os.path.join(
+    data_path, "songs_to_index.json"
+)
+users_to_index_filepath = os.path.join(
+    data_path, "users_to_index.json"
 )
 
-# Load song popularity as song play count
-
-users_to_songs = {}
-song_ids = set()
 
 
-print("Building songs count...")
+def load_taste_dataset_as_csc_matrix():
+    try:
+        return load_npz(csc_filepath)
+    except:
+        return generate_csc_matrix()
 
-with open(user_song_plays_filepath, "r") as f:
-    line = f.readline()
-    while line:
-        user, song, _ = line.strip().split("\t")
 
-        song_ids.add(song)
+def generate_csc_matrix():
 
-        if user in users_to_songs:
-            if song in users_to_songs[user]:
-                users_to_songs[user][song] += 1
-            else:
-                users_to_songs[user][song] = 1
-        else:
-            users_to_songs[user] = { song: 1 }
+    print("Building songs count...")
 
+    users_to_songs = {}
+    song_ids = set()
+
+    with open(user_song_plays_filepath, "r") as f:
         line = f.readline()
+        while line:
+            user, song, count = line.strip().split("\t")
+
+            count = int(count)
+
+            song_ids.add(song)
+
+            if user in users_to_songs:
+                # No user-song duplicates
+                # if song in users_to_songs[user]:
+                #     users_to_songs[user][song] += count
+                # else:
+                #     users_to_songs[user][song] = count
+                users_to_songs[user][song] = count
+            else:
+                users_to_songs[user] = { song: count }
+
+            line = f.readline()
+
+    # Map songids to indexes
+    with open(songs_to_index_filepath, 'w') as outfile:
+        songs_to_index = { song: i for i, song in enumerate(song_ids) }
+        json.dump(songs_to_index, outfile, separators=(',', ':'))
+
+    # Map user ids to indexes
+    with open(users_to_index_filepath, 'w') as outfile:
+        users_to_index = { user: i for i, user in enumerate(users_to_songs.keys()) }
+        json.dump(users_to_index, outfile, separators=(',', ':'))
 
 
+    # Build co-ocurrence matrix
+    print("Building users to songs matrix...")
 
-print("Building users to songs matrix...")
+    data_user_indexes = []
+    data_song_indexes = []
+    data = []
 
-user_ids = users_to_songs.keys()
-num_users = len(user_ids)
-num_songs = len(song_ids)
+    for user_index, user in enumerate(users_to_songs.keys()):
+
+        for song in users_to_songs[user].keys():
+
+            play_count = users_to_songs[user][song]
+            song_index = songs_to_index[song]
+
+            data.append(play_count)
+            data_user_indexes.append(user_index)
+            data_song_indexes.append(song_index)
+
+    data = np.array(data)
+    data_user_indexes = np.array(data_user_indexes)
+    data_song_indexes = np.array(data_song_indexes)
+
+    ## Generate co-ocurrence matrix
+    data = csc_matrix((data, (data_user_indexes, data_song_indexes)))
+
+    # Persist data
+    save_npz(csc_filepath, data)
+
+    return data 
+
+try:
+    with open(users_to_index_filepath) as json_file:
+        users_to_index = json.load(json_file)
+except:
+    generate_csc_matrix()
+    with open(users_to_index_filepath) as json_file:
+        users_to_index = json.load(json_file)
+
+try:
+    with open(songs_to_index_filepath) as json_file:
+        songs_to_index = json.load(json_file)
+except:
+    generate_csc_matrix()
+    with open(songs_to_index_filepath) as json_file:
+        songs_to_index = json.load(json_file)
 
 
-# Use this approach: 
-# https://stackoverflow.com/questions/57370472/recommendation-system-with-matrix-factorization-for-huge-data-gives-memoryerror
-# Get i and j where to put each value
+def predict(userid, songid):
+    user_idx = users_to_index[userid]
+    song_idx = songs_to_index[songid]
 
-user_indexes = [ i for i, _ in enumerate(user_ids)]
-movies_indexes = [ j for j, _ in enumerate(song_ids)]
+    return np.dot(W[user_idx], S[:, song_idx])
+    
 
-
-
-# for i, user in enumerate(user_ids):
-
-#     for j, song in enumerate(song_ids):
-#         data[i][j] = users_to_songs[user].get(song, 0)
+# Load data
+X = load_taste_dataset_as_csc_matrix()
+print("Loaded data")
 
 
+# Run matrix factorization
+print("Training.. ")
+model = NMF(n_components=16, init='random', random_state=0)
+W = model.fit_transform(X)
+S = model.components_
 
-matrix = pd.DataFrame(
-    0,
-    index=user_ids,
-    columns=song_ids,
-    dtype="int8"
-).to_sparse(0)
+# Predict example
+print(
+    predict("b80344d063b5ccb3212f76538f3d9e43d87dca9e", "SOIZAZL12A6701C53B")
+)
 
-
-print(matrix.head())
-
-for user in user_ids:
-
-    for song in users_to_songs[user].keys():
-        matrix.at[user, song] = users_to_songs[user][song]
 
 
