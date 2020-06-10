@@ -1,6 +1,6 @@
 import logging
 from recommender.domain.audio import SpotifyAudioFeatures
-from typing import Optional
+from typing import Iterable, Optional
 import spotipy
 
 from spotipy import util
@@ -95,10 +95,27 @@ class SpotifyService:
             )
             return None
 
+    def get_user_tracks(self, limit=20, offset=0) -> Iterable:
+        response =  self.spotify.current_user_saved_tracks(limit, offset)
+        return [item["track"] for item in response["items"]]
+
+    def create_playlist(self, tracks=[]):
+        playlist_id = ""
+        
+        response = self.spotify.user_playlists(self.username)
+
+        for playlist in response["items"]:
+            if playlist["name"] == "Test playlist":
+                playlist_id = playlist["id"]
+                break
+
+        
+        self.spotify.user_playlist_add_tracks(self.username, playlist_id, tracks)
+
     def _login(self):
         token = util.prompt_for_user_token(
             self.username,
-            scope="user-library-read",
+            scope="playlist-modify-public,user-library-read",
             client_id=self.apikey,
             client_secret=self.apisecret,
             redirect_uri=self.redirect_uri
