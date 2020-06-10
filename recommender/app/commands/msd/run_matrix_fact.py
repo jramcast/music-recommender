@@ -2,6 +2,16 @@
 Matrix factorization example
 """
 
+# Inspiration: Music Recommendations with Collaborative Filtering and Cosine Distance
+# https://beckernick.github.io/music_recommender/
+# 
+# Inspiration: Matrix Factorization for Movie Recommendations in Python
+# https://beckernick.github.io/matrix-factorization-recommender/
+#
+# Example Kaggle notebook:
+# https://www.kaggle.com/jramcast/million-song-recommendation-engines/edit
+
+
 import os
 import sys
 sys.path.insert(
@@ -18,7 +28,7 @@ import pandas as pd
 import numpy as np
 from scipy.sparse import csc_matrix, save_npz, load_npz
 from recommender.domain.scoring import msd_average_precision, msd_mAP
-from sklearn.decomposition import NMF, IncrementalPCA
+from sklearn.decomposition import TruncatedSVD
 
 
 data_path = os.path.join(
@@ -145,9 +155,12 @@ X = load_taste_dataset_as_csc_matrix()
 print("Loaded data")
 
 
+# TODO: Normalize user listenings count: song count / total user counts
+
+
 # Run matrix factorization
 print("Training.. ")
-model = NMF(n_components=16, init='random', random_state=0)
+model = TruncatedSVD(n_components=500, random_state=42)
 W = model.fit_transform(X)
 S = model.components_
 
