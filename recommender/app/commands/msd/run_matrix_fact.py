@@ -30,6 +30,7 @@ import pathlib
 import json
 import pandas as pd
 import numpy as np
+from timeit import default_timer as timer
 from scipy.sparse import csc_matrix, save_npz, load_npz
 from recommender.domain.scoring import msd_average_precision, msd_mAP
 from sklearn.decomposition import TruncatedSVD
@@ -209,12 +210,15 @@ print("Loaded data")
 
 
 # Run matrix factorization
-n_components = 2
+n_components = 200
+start = timer()
 print(f"Training with {n_components} components...")
 model = TruncatedSVD(n_components, random_state=42)
 W = model.fit_transform(X)
 S = model.components_
-
+end = timer()
+elapsed = end - start
+print(f"Traing done in {elapsed} seconds")
 
 def predict(userid, songid):
     user_idx = users_to_index[userid]
@@ -271,7 +275,7 @@ with open(eval_triplets_filepath, "r") as f:
 # Compute recommendations for evaluation users
 recommendations = {}
 
-for i, userid in enumerate(eval_users[:100]):
+for i, userid in enumerate(eval_users[:1000]):
 
     predictions = predict_all(userid)
 
