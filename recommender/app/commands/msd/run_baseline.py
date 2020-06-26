@@ -139,4 +139,4 @@ print("\n\n==== RECOMMENDATION EXAMPLE ==========")
 test_user = "b584c8326c8f79052d8d2adae67afb9da248b3df"
 recommended_for_user = recommendations[test_user]
 print(f"\nUser: {test_user}. "
-      + f"Recommended songs: {recommended_for_user}")
+      + f"Recommended songs: {recommended_for_user[:5]}...")
