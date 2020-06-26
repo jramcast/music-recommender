@@ -259,11 +259,11 @@ with open(eval_triplets_filepath, "r") as f:
     line = f.readline()
     while line:
         user, song, _ = line.strip().split("\t")
-        song_id = songs_to_index[song]
+        songidx = songs_to_index[song]
         if user in eval_listen_count:
-            eval_listen_count[user].add(song_id)
+            eval_listen_count[user].add(songidx)
         else:
-            eval_listen_count[user] = set([song_id])
+            eval_listen_count[user] = set([songidx])
 
         line = f.readline()
 
@@ -271,10 +271,12 @@ with open(eval_triplets_filepath, "r") as f:
 # Compute recommendations for evaluation users
 recommendations = {}
 
-for i, userid in enumerate(eval_users):
+for i, userid in enumerate(eval_users[:100]):
 
     predictions = predict_all(userid)
 
+    # To get a rank, we must revers the order
+    # We also need to limit the rank to 500
     ranked = np.argsort(predictions)[::-1][:500]
 
     # user_song_scores = sorted(
@@ -284,12 +286,12 @@ for i, userid in enumerate(eval_users):
     # )
 
 
-    recommendations[userid] = [songs_index_to_ids[idx] for idx in ranked]
+    # recommendations[userid] = [songs_index_to_ids[idx] for idx in ranked]
+    recommendations[userid] = ranked
     print(f"Generated recommendations for {i} users")
 
 
 score = msd_mAP(
-    eval_users,
     recommendations,
     eval_listen_count
 )

@@ -24,17 +24,21 @@ def msd_average_precision(
     return score / min(library_length, rank_limit)
 
 
-def msd_mAP(users, recommendations, user_libraries, rank_limit=500):
+def msd_mAP(recommendations, user_libraries, rank_limit=500):
     score = 0
 
-    for userid, recommendations_for_user in enumerate(recommendations):
-        if not users[userid] in user_libraries:
+    for userid in recommendations.keys():
+
+        recommendations_for_user = recommendations[userid]
+
+        if not userid in  user_libraries:
             continue
 
-        user_library = user_libraries[users[userid]]
+        user_library = user_libraries[userid]
+
         score += msd_average_precision(
             recommendations_for_user,
             user_library,
             rank_limit)
 
-    return score / len(users)
+    return score / len(recommendations.keys())
