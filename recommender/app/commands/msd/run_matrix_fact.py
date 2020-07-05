@@ -32,7 +32,7 @@ import pandas as pd
 import numpy as np
 from timeit import default_timer as timer
 from scipy.sparse import csc_matrix, save_npz, load_npz
-from recommender.domain.scoring import msd_average_precision, msd_mAP
+from recommender.domain.scoring import msd_mAP
 from sklearn.decomposition import TruncatedSVD
 
 
@@ -118,21 +118,22 @@ def generate_csc_matrix():
 
     users_to_songs = {}
 
-    for user, song, count in get_train_triplets():
+    for userid, songid, count in get_train_triplets():
         count = int(count)
 
-        if song not in songs_to_index:
-            print("song " + song + " not in song_to_idex")
+        if songid not in songs_to_index:
+            print("song " + songid + " not in song_to_index")
 
-        if user in users_to_songs:
+        if userid in users_to_songs:
             # No user-song duplicates
             # if song in users_to_songs[user]:
             #     users_to_songs[user][song] += count
             # else:
             #     users_to_songs[user][song] = count
-            users_to_songs[user][song] = count
+            users_to_songs[userid][songid] = count
         else:
-            users_to_songs[user] = { song: count }
+            users_to_songs[userid] = { songid: count }
+
 
     # # Map songids to indexes
     # with open(songs_to_index_filepath, 'w') as outfile:
@@ -152,13 +153,13 @@ def generate_csc_matrix():
     data_song_indexes = []
     data = []
 
-    for user in users_to_index.keys():
+    for userid in users_to_index.keys():
 
-        user_index = int(users_to_index[user])
+        user_index = int(users_to_index[userid])
 
-        for songid in users_to_songs.get(user, {}).keys():
+        for songid in users_to_songs.get(userid, {}).keys():
 
-            play_count = users_to_songs[user][songid]
+            play_count = users_to_songs[userid][songid]
             song_index = int(songs_to_index[songid])
 
             data.append(play_count)
@@ -196,10 +197,6 @@ def generate_csc_matrix():
 
 
 
-
-
-
-
 # Load data
 X = load_taste_dataset_as_csc_matrix()
 print("Loaded data")
@@ -208,9 +205,8 @@ print("Loaded data")
 # TODO: Normalize user listenings count: song count / total user counts
 
 
-
 # Run matrix factorization
-n_components = 200
+n_components = 5
 start = timer()
 print(f"Training with {n_components} components...")
 model = TruncatedSVD(n_components, random_state=42)
@@ -275,7 +271,9 @@ with open(eval_triplets_filepath, "r") as f:
 # Compute recommendations for evaluation users
 recommendations = {}
 
-for i, userid in enumerate(eval_users[:1000]):
+eval_users = eval_users[:1000]
+
+for i, userid in enumerate(eval_users):
 
     predictions = predict_all(userid)
 
@@ -289,13 +287,12 @@ for i, userid in enumerate(eval_users[:1000]):
     #     reverse=True
     # )
 
-
     # recommendations[userid] = [songs_index_to_ids[idx] for idx in ranked]
     recommendations[userid] = ranked
     print(f"Generated recommendations for {i} users")
 
-
 score = msd_mAP(
+    eval_users,
     recommendations,
     eval_listen_count
 )

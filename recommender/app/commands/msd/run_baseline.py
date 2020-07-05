@@ -88,13 +88,13 @@ with open(eval_triplets_filepath, "r") as f:
     line = f.readline()
     while line:
         user, song, _ = line.strip().split("\t")
-        song_id = song_to_index[song]
+        song_index = song_to_index[song]
         if user in user_to_songs:
             user_to_songs[user].add(song)
-            user_to_song_ids[user].add(song_id)
+            user_to_song_ids[user].add(song_index)
         else:
             user_to_songs[user] = set([song])
-            user_to_song_ids[user] = set([song_id])
+            user_to_song_ids[user] = set([song_index])
 
         line = f.readline()
 
@@ -124,6 +124,12 @@ for user in canonical_users:
 
 print("\n\n====== EVALUATION ==========")
 
+
+# print(canonical_users[:2])
+# print([list(recommendations[key])[:2] for key in list(recommendations.keys())[:2]])
+# print([list(user_to_song_ids[key])[:2] for key in list(user_to_song_ids.keys())[:2]])
+
+# exit()
 
 score = msd_mAP(
     canonical_users,
