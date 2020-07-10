@@ -32,6 +32,7 @@ def msd_mAP(recommendations, user_libraries, rank_limit=500):
         recommendations_for_user = recommendations[userid]
 
         if not userid in  user_libraries:
+            print("Warn: User does not have validation triplets")
             continue
 
         user_library = user_libraries[userid]
