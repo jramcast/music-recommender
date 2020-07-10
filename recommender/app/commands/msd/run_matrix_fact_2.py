@@ -127,12 +127,12 @@ def generate_csc_matrix():
     i = 0
     with open(kaggle_triplets_filepath, "r") as f:
         line = f.readline()
-        while line and i < 10000:
+        while line:
             user, song, count = line.strip().split("\t")
-            count = int(count)
+            count = 1 if int(count) > 0 else 0
             songidx = songs_to_index[song]
 
-            if i % 10 == 0:
+            if i % 1000 == 0:
                 if user in validation_triplets:
                     validation_triplets[user].add(songidx)
                 else:
@@ -160,38 +160,38 @@ def generate_csc_matrix():
 
             line = f.readline()
 
-    # Normalization
-    for user in triplets_for_matrix.keys():
-        songs = triplets_for_matrix[user]
-        sum_counts = 0
-        for songid in songs.keys():
-            sum_counts += songs[songid]
-        count_avg = sum_counts / len(songs.keys())
+    # # Normalization
+    # for user in triplets_for_matrix.keys():
+    #     songs = triplets_for_matrix[user]
+    #     sum_counts = 0
+    #     for songid in songs.keys():
+    #         sum_counts += songs[songid]
+    #     count_avg = sum_counts / len(songs.keys())
 
-        # Handle outliers
-        deviation = 0
-        for songid in songs.keys():
-            deviation += (songs[songid] - count_avg) ** 2
+    #     # Handle outliers
+    #     deviation = 0
+    #     for songid in songs.keys():
+    #         deviation += (songs[songid] - count_avg) ** 2
 
-        deviation = math.sqrt(deviation / count_avg)
+    #     deviation = math.sqrt(deviation / count_avg)
 
-        for songid in songs.keys():
-            if songs[songid] > count_avg + deviation:
-                songs[songid] = count_avg + deviation
+    #     for songid in songs.keys():
+    #         if songs[songid] > count_avg + deviation:
+    #             songs[songid] = count_avg + deviation
 
-        # After handling outliers, recalculate count avg, get min and max
-        sum_counts = 0
-        count_values = []
-        for songid in songs.keys():
-            sum_counts += songs[songid]
-            count_values.append(songs[songid])
-        min_count = min(count_values)
-        max_count = max(count_values)
-        count_avg = sum_counts / len(songs.keys())
+    #     # After handling outliers, recalculate count avg, get min and max
+    #     sum_counts = 0
+    #     count_values = []
+    #     for songid in songs.keys():
+    #         sum_counts += songs[songid]
+    #         count_values.append(songs[songid])
+    #     min_count = min(count_values)
+    #     max_count = max(count_values)
+    #     count_avg = sum_counts / len(songs.keys())
 
-        # Normalize
-        for songid in songs.keys():
-            songs[songid] = songs[songid] / sum_counts
+    #     # Normalize
+    #     for songid in songs.keys():
+    #         songs[songid] = songs[songid] / sum_counts
 
 
     # for user, song, count in get_train_triplets():
@@ -260,7 +260,7 @@ print("Loaded data")
 
 
 # Run matrix factorization
-n_components = 50
+n_components = 2
 start = timer()
 print(f"Training with {n_components} components...")
 model = TruncatedSVD(n_components, random_state=42)
@@ -293,13 +293,17 @@ print(
 print("\n\n====== EVALUATION ==========")
 
 
-def evaluate(users, actual_triplets):
+def evaluate(users, actual_triplets, drop={}):
 
     # Compute recommendations for evaluation users
     recommendations = {}
 
     for i, userid in enumerate(users):
         predictions = predict_all(userid)
+
+        # Do not recommend already known songs
+        indexes_to_drop = list(drop.get(userid, []))
+        np.put(predictions, indexes_to_drop, 0)
 
         # To get a rank, we must revers the order
         # We also need to limit the rank to 500
@@ -315,8 +319,12 @@ def evaluate(users, actual_triplets):
         actual_triplets
     )
 
-print("mAP for training set: ", evaluate(list(train_users)[:1000], train_triplets))
-print("mAP for validation set: ", evaluate(list(eval_users), validation_triplets))
+print("mAP for training set: ", evaluate(
+    list(train_users)[:200], train_triplets
+))
+print("mAP for validation set: ", evaluate(
+    list(eval_users), validation_triplets, drop=train_triplets
+))
 
 
 
