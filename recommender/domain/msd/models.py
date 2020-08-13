@@ -3,7 +3,6 @@ from dataclasses import dataclass
 @dataclass
 class User:
     id: str
-    kaggle_index: int
 
     def __hash__(self):
         return hash(self.id)
