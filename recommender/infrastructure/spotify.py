@@ -77,7 +77,7 @@ class SpotifyService:
                     return self.get_audio_features(track)
                 elif e.http_status == 404:
                     self.logger.warn(
-                        f"Audio features not found for " +
+                        "Audio features not found for " +
                         f"{track_artist} - {track_name}"
                     )
                 else:
@@ -85,23 +85,23 @@ class SpotifyService:
 
             except Exception as e:
                 self.logger.warn(
-                    f"Error while getting audio features for " +
+                    "Error while getting audio features for " +
                     f"{track_artist} - {track_name}. Error {e}"
                 )
         else:
             self.logger.warn(
-                f"No audio features available for " +
+                "No audio features available for " +
                 f"{track_artist} - {track_name}"
             )
             return None
 
     def get_user_tracks(self, limit=20, offset=0) -> Iterable:
-        response =  self.spotify.current_user_saved_tracks(limit, offset)
+        response = self.spotify.current_user_saved_tracks(limit, offset)
         return [item["track"] for item in response["items"]]
 
     def create_playlist(self, tracks=[]):
         playlist_id = ""
-        
+
         response = self.spotify.user_playlists(self.username)
 
         for playlist in response["items"]:
@@ -109,7 +109,6 @@ class SpotifyService:
                 playlist_id = playlist["id"]
                 break
 
-        
         self.spotify.user_playlist_add_tracks(self.username, playlist_id, tracks)
 
     def _login(self):
