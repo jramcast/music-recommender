@@ -13,5 +13,9 @@ mongoexport:
 	podman exec -i -t mongomgr mongoexport --uri=mongodb://localhost:27017/mgr --collection playedtracks --out /tmp/mgr-export/playedtracks.json
 	podman exec -i -t mongomgr mongoexport --uri=mongodb://localhost:27017/mgr --collection spotify_audiofeatures --out /tmp/mgr-export/spotify_audiofeatures.json
 
+mongoimport:
+	podman exec -i -t mongomgr mongoimport --uri=mongodb://localhost:27017/mgr --collection playedtracks /tmp/mgr-export/playedtracks.json
+	podman exec -i -t mongomgr mongoimport --uri=mongodb://localhost:27017/mgr --collection spotify_audiofeatures /tmp/mgr-export/spotify_audiofeatures.json
+
 mongo_getlast:
 	podman exec -i -t mongomgr mongo mgr  --eval 'db.playedtracks.find().sort({ "$$natural": -1}).limit(1)'
