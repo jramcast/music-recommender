@@ -32,9 +32,9 @@ tracks_repository = MongoDBTracksRepository(db.playedtracks)
 #tracks_repository = CSVTracksRepository("last_fm_plays.csv")
 
 
-# START_TIME = datetime(2007, 7, 1)
-START_TIME = datetime(2021, 7, 1)
-END_TIME = datetime.now()
+START_TIME = datetime(2018, 10, 8)
+END_TIME = datetime(2019, 1, 1)
+# END_TIME = datetime.now()
 
 
 if __name__ == "__main__":

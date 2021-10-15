@@ -22,8 +22,11 @@ class MongoDBTracksRepository:
         )
 
     def all(self) -> Iterable[Track]:
-        for doc in self.collection.find():
+        for doc in self.all_raw():
             yield self._as_track(doc)
+
+    def all_raw(self) -> Iterable[any]:
+        return self.collection.find().sort("playback_utc_date", 1)
 
     def save(self, track: Track):
         self.collection.insert_one(asdict(track))
