@@ -32,6 +32,8 @@ audio_features_repository = MongoDBSpotifyAudioFeaturesRepository(
     db.spotify_audiofeatures
 )
 
+SKIP = 1524
+
 
 if __name__ == "__main__":
 
@@ -41,8 +43,8 @@ if __name__ == "__main__":
 
         logging.info(f"Processed {count}")
         count += 1
-        # if count < 45900:
-        #     continue
+        if count < SKIP:
+            continue
 
         if audio_features_repository.load(track):
             logging.info(f"Skipping {track} features already in DB.")

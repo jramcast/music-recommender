@@ -51,7 +51,10 @@ class SpotifyService:
                     limit=1
                 )
             else:
-                raise e
+                self.logger.warn(
+                    "Error while searching for " +
+                    f"{track_artist} - {track_name}. Error {e}"
+                )
 
         search_items = search_results["tracks"]["items"]
 
@@ -81,7 +84,10 @@ class SpotifyService:
                         f"{track_artist} - {track_name}"
                     )
                 else:
-                    raise e
+                    self.logger.warn(
+                        "Error while getting audio features for " +
+                        f"{track_artist} - {track_name}. Error {e}"
+                    )
 
             except Exception as e:
                 self.logger.warn(
@@ -96,7 +102,7 @@ class SpotifyService:
             return None
 
     def get_user_tracks(self, limit=20, offset=0) -> Iterable:
-        response = self.spotify.current_user_saved_tracks(limit, offset)
+        response = self.spotify.curr ent_user_saved_tracks(limit, offset)
         return [item["track"] for item in response["items"]]
 
     def create_playlist(self, tracks=[]):
